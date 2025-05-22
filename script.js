@@ -61,18 +61,11 @@ function configurarEventos() {
     }
   });
 
-  document.getElementById('cidadeSelect').addEventListener('change', () => {
-    buscarIndicadores();
-  });
-
-  document.getElementById('anoSelect').addEventListener('change', () => {
-    buscarIndicadores();
-  });
+  document.getElementById('cidadeSelect').addEventListener('change', buscarIndicadores);
+  document.getElementById('anoSelect').addEventListener('change', buscarIndicadores);
 
   document.querySelectorAll('input[name="indicador"]').forEach(checkbox => {
-    checkbox.addEventListener('change', () => {
-      buscarIndicadores();
-    });
+    checkbox.addEventListener('change', buscarIndicadores);
   });
 }
 
@@ -85,32 +78,69 @@ function buscarIndicadores() {
     return;
   }
 
-  // Exemplo de IDs de variáveis na API SIDRA:
-  const variaveis = {
-    populacao: '93',
-    densidade: '94',
-    escolarizacao: '95',
-    salario: '96',
-    pib: '97'
-  };
-
   indicadoresSelecionados.forEach(indicador => {
-    const variavelId = variaveis[indicador];
-    if (variavelId) {
-      fetch(`https://servicodados.ibge.gov.br/api/v3/agregados/${variavelId}/periodos/${ano}/variaveis/${variavelId}?localidades=N6[${cidadeId}]`)
-        .then(response => response.json())
-        .then(dados => {
-          const resultado = dados[0]?.resultados[0]?.series[0]?.serie[ano];
-          if (resultado) {
-            document.getElementById(indicador).textContent = resultado;
-          } else {
-            document.getElementById(indicador).textContent = 'Dados não disponíveis';
-          }
-        })
-        .catch(error => {
-          console.error(`Erro ao buscar indicador ${indicador}:`, error);
-          document.getElementById(indicador).textContent = 'Erro ao carregar';
-        });
+    if (indicador === 'populacao') {
+      buscarPopulacao(cidadeId);
+    } else if (indicador === 'densidade') {
+      buscarDensidade(cidadeId);
+    } else if (indicador === 'escolarizacao') {
+      buscarEscolarizacao(cidadeId);
+    } else if (indicador === 'salario') {
+      buscarSalario(cidadeId);
+    } else if (indicador === 'pib') {
+      buscarPIB(cidadeId);
     }
   });
+}
+
+function buscarPopulacao(cidadeId) {
+  fetch(`https://servicodados.ibge.gov.br/api/v1/projecoes/populacao/${cidadeId}`)
+    .then(response => response.json())
+    .then(data => {
+      const populacao = data.projecao.populacao.toLocaleString('pt-BR');
+      document.getElementById('populacao').textContent = populacao;
+    })
+    .catch(() => {
+      document.getElementById('populacao').textContent = 'Dados não disponíveis';
+    });
+}
+
+function buscarDensidade(cidadeId) {
+  document.getElementById('densidade').textContent = 'Dados não disponíveis';
+}
+
+function buscarEscolarizacao(cidadeId) {
+  fetch(`https://servicodados.ibge.gov.br/api/v1/indicadores/60025/municipios/${cidadeId}`)
+    .then(response => response.json())
+    .then(data => {
+      const valor = data[0]?.res[0]?.res?.toFixed(2) || 'Dados não disponíveis';
+      document.getElementById('escolarizacao').textContent = valor + '%';
+    })
+    .catch(() => {
+      document.getElementById('escolarizacao').textContent = 'Dados não disponíveis';
+    });
+}
+
+function buscarSalario(cidadeId) {
+  fetch(`https://servicodados.ibge.gov.br/api/v1/indicadores/29171/municipios/${cidadeId}`)
+    .then(response => response.json())
+    .then(data => {
+      const valor = data[0]?.res[0]?.res?.toFixed(2) || 'Dados não disponíveis';
+      document.getElementById('salario').textContent = 'R$ ' + valor;
+    })
+    .catch(() => {
+      document.getElementById('salario').textContent = 'Dados não disponíveis';
+    });
+}
+
+function buscarPIB(cidadeId) {
+  fetch(`https://servicodados.ibge.gov.br/api/v1/indicadores/5938/municipios/${cidadeId}`)
+    .then(response => response.json())
+    .then(data => {
+      const valor = data[0]?.res[0]?.res?.toFixed(2) || 'Dados não disponíveis';
+      document.getElementById('pib').textContent = 'R$ ' + valor;
+    })
+    .catch(() => {
+      document.getElementById('pib').textContent = 'Dados não disponíveis';
+    });
 }
